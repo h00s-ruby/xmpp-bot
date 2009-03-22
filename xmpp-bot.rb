@@ -20,7 +20,7 @@ class XMPPBot
   def connect
     @jabber.connect
     @jabber.auth(@config['password'])
-    @jabber.send(Presence.new.set_type(:available))
+    keep_alive
   end
 
   def disconnect
@@ -34,7 +34,7 @@ class XMPPBot
   end
 
   def respond(to, message)
-    @jabber.send(Message::new(to, message).set_type(:chat))
+    @jabber.send(Message.new(to, message).set_type(:chat))
   end
 
   def add_command(command, syntax, description, &callback)
@@ -47,6 +47,15 @@ class XMPPBot
 
   def run_command(command, params)
     return @commands[command]['callback'].call(params)
+  end
+
+  def keep_alive
+    Thread.new do
+      while true
+        @jabber.send(Presence.new.set_type(:available))
+        sleep(120)
+      end
+    end
   end
 
   private
