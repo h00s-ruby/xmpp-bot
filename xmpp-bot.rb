@@ -8,6 +8,13 @@ class XMPPBot
     @commands = {}
     @jabber = Client.new(JID::new(@config['JID'] + '/' + @config['resource']))
     @jabber.on_exception { sleep 5; connect() }
+    add_command('help', 'help', 'show all bot commands') do |params|
+      message = "Available commands:"
+      @commands.sort.each do |command, command_info|
+        message += "\n#{command_info['syntax']} - #{command_info['description']}"
+      end
+      message
+    end
   end
 
   def connect
@@ -49,8 +56,13 @@ class XMPPBot
       command = message.body.to_s.split(' ')[0]
       params = message.body.to_s.split(' ')[1..-1]
       if @commands.has_key?(command)
-        response = run_command(command, params)
-        respond(sender, response)
+        begin
+          response = run_command(command, params)
+        rescue Exception => e
+          response = "#{e} (#{e.class})!"
+        ensure
+          respond(sender, response.to_s)
+        end
       end
     end
   end
