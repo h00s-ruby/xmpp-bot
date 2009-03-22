@@ -30,15 +30,29 @@ class XMPPBot
     @jabber.send(Message::new(to, message).set_type(:chat))
   end
 
-  private
-  def parse_message(message)
-    if @config['operators'].include?(message.from.to_s.sub(/\/.+$/, ''))
-      parse_command(message.from, message.body)
-    end
+  def add_command(command, syntax, description, &callback)
+    @commands[command] = {
+      'syntax' => syntax,
+      'description' => description,
+      'callback' => callback
+    }
   end
 
-  def parse_command(sender, command)
-    
+  def run_command(command, params)
+    return @commands[command]['callback'].call(params)
+  end
+
+  private
+  def parse_message(message)
+    sender = message.from
+    if @config['operators'].include?(sender.to_s.sub(/\/.+$/, ''))
+      command = message.body.to_s.split(' ')[0]
+      params = message.body.to_s.split(' ')[1..-1]
+      if @commands.has_key?(command)
+        response = run_command(command, params)
+        respond(sender, response)
+      end
+    end
   end
 
 end
