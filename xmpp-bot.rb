@@ -89,11 +89,6 @@ class XMPPBot
           respond(sender, response.to_s)
         end
     end
-
-    if @config['operators'].include?(sender.to_s.sub(/\/.+$/, ''))
-      if @commands.has_key?(command)
-      end
-    end
   end
 
 end
