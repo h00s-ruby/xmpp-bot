@@ -5,16 +5,21 @@ class XMPPBot
 
   def initialize(config)
     @config = config
+    @config['keeping_alive'] = false
     @commands = {}
     @jabber = Client.new(JID::new(@config['JID'] + '/' + @config['resource']))
-    @jabber.on_exception { sleep 5; connect() }
+    @jabber.on_exception { sleep 60; connect() }
     add_default_commands
   end
 
   def connect
-    @jabber.connect
-    @jabber.auth(@config['password'])
-    keep_alive
+    begin
+      @jabber.connect
+      @jabber.auth(@config['password'])
+      keep_alive
+    rescue Exception => e
+      puts "Error connecting: #{e} (#{e.class})!"
+    end
   end
 
   def disconnect
@@ -50,11 +55,8 @@ class XMPPBot
     end
 
     add_command('addoperator', 'addoperator <jid> <password>', 'add user with <jid> to operators list') do |params|
-      message = "Available commands:"
-      @commands.sort.each do |command, command_info|
-        message += "\n#{command_info['syntax']} - #{command_info['description']}"
-      end
-      message
+      # TO DO
+      message = "Not implemented yet"
     end
   end
 
@@ -63,10 +65,13 @@ class XMPPBot
   end
 
   def keep_alive
-    Thread.new do
-      while true
-        @jabber.send(Presence.new.set_type(:available))
-        sleep(120)
+    if not @config['keeping-alive']
+      @config['keeping-alive'] = true
+      Thread.new do
+        while true
+          @jabber.send(Presence.new.set_type(:available))
+          sleep(120)
+        end
       end
     end
   end
