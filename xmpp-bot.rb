@@ -5,7 +5,7 @@ class XMPPBot
 
   def initialize(config)
     @config = config
-    @config['keeping_alive'] = false
+    @keep_alive_status = false
     @commands = {}
     @jabber = Client.new(JID::new(@config['JID'] + '/' + @config['resource']))
     #@jabber.on_exception { sleep 60; connect() }
@@ -16,7 +16,7 @@ class XMPPBot
   def connect
     begin
       if not @jabber.is_connected?
-        @config['keeping-alive'] = false
+        @keep_alive_status = false
         @jabber.connect(@config['host'])
         @jabber.auth(@config['password'])
         @jabber.send(Presence.new.set_type(:available))
@@ -24,12 +24,12 @@ class XMPPBot
     rescue Exception => e
       puts "Error connecting: #{e} (#{e.class})!"
     ensure
-      @config['keeping-alive'] = true
+      @keep_alive_status = true
     end
   end
 
   def disconnect
-    @config['keeping-alive'] = false;
+    @keep_alive_status = false;
     @jabber.close
   end
 
@@ -94,7 +94,7 @@ class XMPPBot
   def keep_alive
     Thread.new do
       while true
-        if @config['keeping-alive']
+        if @keep_alive_status
           if @jabber.is_connected?
             begin
               @jabber.send(Presence.new.set_type(:available))
